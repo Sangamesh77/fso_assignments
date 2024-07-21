@@ -1,0 +1,30 @@
+```mermaid
+sequenceDiagram
+
+    participant browser
+    participant server
+
+    browser ->> server: GET https://studies.cs.helsinki.fi/exampleapp/spa
+    activate server
+    server -->> browser: The HTML page
+    deactivate server
+
+    Note right of browser: browser handles the HTML page content
+    browser ->> server: GET https://studies.cs.helsinki.fi/exampleapp/main.css
+    activate server
+    server -->> browser: The CSS file
+    deactivate server
+
+    browser ->> server: GET https://studies.cs.helsinki.fi/exampleapp/spa.js
+    activate server 
+    server ->> browser: The js file
+    deactivate server
+
+    Note right of browser: browser executes the script
+    browser -->> server: GET https://studies.cs.helsinki.fi/exampleapp/data.json
+    activate server
+    server -->> browser: The list of notes [{"content":"hi from spain","date":"2024-07-20T20:08:36.312Z"},...}]
+    deactivate server
+    Note right of browser: The notes are parsed and rendered on the screen as per the script. The local variabvle 'notes' is updated with the list from the server.
+
+```

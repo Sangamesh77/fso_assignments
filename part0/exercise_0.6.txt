@@ -1,0 +1,18 @@
+```mermaid
+sequenceDiagram
+    participant browser
+    participant server
+
+    Note right of browser: The notes page is rendered already and the user clicks 'Send' with a new note
+    Note right of browser: The browser handles the form submit event as follows
+
+    activate browser
+    Note right of browser: The local variable 'notes' is updated with the new note payload
+    Note right of browser: The notes list is rendered with the new note as updated in the variable
+    browser ->> server: POST https://studies.cs.helsinki.fi/exampleapp/new_note_spa, Payload: {"content":<note_text>,"date":<note_time>}
+    activate server
+    server -->> browser: Acknowledges server copy of notes is updated with response payload: {"message":"note created"}
+    deactivate server
+    Note right of browser: Based on the acnowledgement, the browser logs the payload reponse
+
+```

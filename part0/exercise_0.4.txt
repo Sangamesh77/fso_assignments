@@ -1,0 +1,36 @@
+```mermaid
+sequenceDiagram
+  participant browser
+  participant server
+
+  Note right of browser: The notes page is rendered already and the user clicks 'Send' with a new note
+  Note right of browser: The browser handles the form submit event as follows
+
+  browser ->> server: POST https://studies.cs.helsinki.fi/exampleapp/new_note, Payload: note=<the_note_text>
+  activate server
+  Note left of server: The new note is added to the list of notes
+  server -->> browser: redirect GET https://studies.cs.helsinki.fi/exampleapp/notes
+  deactivate server
+  browser ->> server: GET https://studies.cs.helsinki.fi/exampleapp/notes
+  activate server
+  server -->> browser: The HTML page
+  deactivate server
+
+  browser ->> server: GET https://studies.cs.helsinki.fi/exampleapp/main.css
+  activate server
+  server -->> browser: The css file
+  deactivate server
+
+  browser ->> server: GET https://studies.cs.helsinki.fi/exampleapp/main.js
+  activate server
+  server -->> browser: The js file which fetches and renders the notes
+  deactivate server
+
+  Note right of browser: The script is executed 
+  browser ->> server: GET https://studies.cs.helsinki.fi/exampleapp/data.json
+  activate server
+  server -->> browser: The updated data.json with the new note [{"content":"testSpa","date":"2024-07-20T19:53:43.272Z"}, ...}]
+  deactivate server
+  Note right of browser: The notes list is fully rendered, with the new note
+
+```
