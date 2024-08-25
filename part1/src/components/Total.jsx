@@ -1,4 +1,4 @@
-import { ExerciseNums } from "../Assets/Constants"
+import { ExerciseNums } from "../assets/Constants"
 
 const Total = () => {
     return (

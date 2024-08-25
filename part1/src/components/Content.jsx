@@ -1,5 +1,5 @@
 import Part from "./Part"
-import { PartStrings, ExerciseNums } from "../Assets/Constants"
+import { PartStrings, ExerciseNums } from "../assets/Constants"
 import Header from "./Header"
 
 const Content = () => {
