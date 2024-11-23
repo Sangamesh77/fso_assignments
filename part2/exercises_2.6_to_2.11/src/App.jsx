@@ -1,20 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ShortUniqueId from 'short-unique-id'
+import axios from 'axios'
+
 import Filter from './components/Filter'
 import AddNewRecord from './components/AddNewRecord'
 import FilteredDisplay from './components/FilteredDisplay'
 
 const App = () => {
   const uid = new ShortUniqueId({ length: 3})
-  const [persons, setPersons] = useState([
-    {
-      name: 'Arto Hellas',
-      number: '123123123'
-    }
-  ]) 
+  const [persons, setPersons] = useState([]) 
   const [filteredPersons, setFilteredPersons] = useState('')
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
+
+  useEffect(() => {
+    axios
+    .get("http://localhost:3001/persons")
+    .then((response) => {
+      console.log("Data received")
+      setPersons(response.data)
+    })
+  }, [])
 
   const resetInputs = () => {
     setNewName('')
