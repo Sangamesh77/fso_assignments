@@ -5,6 +5,7 @@ import axios from 'axios'
 import Filter from './components/Filter'
 import AddNewRecord from './components/AddNewRecord'
 import FilteredDisplay from './components/FilteredDisplay'
+import phoneBookService from "./services/phoneBook"
 
 const App = () => {
   const uid = new ShortUniqueId({ length: 3})
@@ -14,11 +15,11 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
 
   useEffect(() => {
-    axios
-    .get("http://localhost:3001/persons")
-    .then((response) => {
+    phoneBookService
+    .getAll()
+    .then((persons) => {
       console.log("Data received")
-      setPersons(response.data)
+      setPersons(persons)
     })
   }, [])
 
@@ -29,15 +30,23 @@ const App = () => {
 
   const addPhoneNumber = (event) => {
     event.preventDefault()
-    persons.findIndex(nameObj => nameObj.name === newName) < 0 ? 
-    setPersons(
-      persons.concat(
-        {
-          name: newName,
+    const indexOfNewName = persons.findIndex(nameObj => nameObj.name === newName)
+    indexOfNewName < 0 ? 
+      phoneBookService
+      .create({name: newName, number: newNumber})
+      .then(response => setPersons(persons.concat(response))) 
+      : (() => {
+        const newPerson = {
+          ...persons[indexOfNewName],
           number: newNumber
         }
-      )
-    ) : alert(`${newName} is already added to phonebook`)
+        console.log("New person", newPerson)
+        if(window.confirm(`${newName} is already added to phonebook, replace the old number with the new one?`)){
+          phoneBookService.update(newPerson).then(
+            response => setPersons(persons.map(person => person.id === persons[indexOfNewName].id ? response : person))
+          )
+        }
+      })()
     resetInputs()
   }
 
@@ -45,6 +54,17 @@ const App = () => {
     return(
       (event) => inputStateSetter(event.target.value)
     )
+  }
+
+  const deleteHandler = personItem => {
+    if(window.confirm(`Delete ${personItem.name} ?`)){
+    phoneBookService.deletePerson(personItem.id).then(
+      response => {
+        setPersons(persons.filter(
+          person => person.id != response.id
+        ))
+      }
+    )}
   }
 
   return (
@@ -63,6 +83,7 @@ const App = () => {
       <FilteredDisplay 
         phonebookList={persons}
         filterString={filteredPersons}
+        deleteHandler={deleteHandler}
       />
     </div>
   )
