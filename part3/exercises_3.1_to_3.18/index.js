@@ -11,33 +11,24 @@ app.use(express.json())
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :payload"))
 const Person = require("./models/phoneBook")
 
-let phoneBook = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+  
+    if (error.name === 'CastError') {
+      return response.status(400).send({ error: 'malformatted id' })
+    } 
+  
+    next(error)
+}
+
+const unknownEndpoint = (request, response) => {
+response.status(404).send({ error: 'unknown endpoint' })
+}
 
 app.get("/api/persons", (request, response) => {
     Person.find({}).then(result => {
         response.json(result)
-    })
+    }).catch(error => next(error))
 })
 
 app.get("/info", (request, response) => {
@@ -49,26 +40,27 @@ app.get("/info", (request, response) => {
                 <p>${Date()}</p>\
             </div>`
         )
-    })
+    }).catch(error => next(error))
 })
 
 app.get("/api/persons/:id", (request, response) => {
     const reqId = new mongodb.ObjectId(request.params.id)
-    Person.find({"id": reqId}).then(person => {
+    Person.findById(reqId).then(person => {
         person ? response.send(person) : response.status(404).send(`Person ${reqId} does not exist!`)
-    })
+    }).catch(error => next(error))
 })
 
 app.delete("/api/persons/:id", (request, response) => {
     const reqId = new mongodb.ObjectId(request.params.id)
-    Person.deleteOne({"id": reqId}).then(result => {
-        if(result.deletedCount === 1){
-            response.status(204).end()
-        } else {
-            response.status(404).send(`Person ${reqId} does not exist!`)
-        }
-    })
+    Person.findById(reqId).then(person => {
+        Person.findByIdAndDelete(reqId)
+        .then(result => {
+            console.log("Person", person)
+            response.status(200).json(person)
+          })
+    }).catch(error => next(error))
 })
+
 
 app.post("/api/persons", (request, response) => {
     const body = request.body
@@ -76,16 +68,36 @@ app.post("/api/persons", (request, response) => {
         response.status(400).send("Name or number is missing")
     }
     Person.find({"name": body.name}).then(result => {
-        if(result){
+        if(result.length > 0){
             response.status(400).send("Name or number already exists!")
         } else {
-            Person.insertOne(body).then(result => {
-                response.status(200)
-                response.json(result)
+            const person = new Person({
+                name: body.name,
+                number: body.number
+            })
+            person.save().then(result => {
+                response.status(202).json(result)
             })
         }
     })
+    .catch(error => next(error))
 })
+
+app.put("/api/persons/:id", (request, response) => {
+    const body = request.body
+    const person = {
+        name: body.name,
+        number: body.number
+    }
+    Person.findByIdAndUpdate(request.params.id, person, {new: true})
+    .then(updatedPerson => {
+        response.json(updatedPerson)
+    })
+    .catch(error => next(error))
+})
+
+app.use(errorHandler)
+app.use(unknownEndpoint)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT)

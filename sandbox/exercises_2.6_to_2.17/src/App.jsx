@@ -91,6 +91,7 @@ const App = () => {
         setPersons(persons.filter(
           person => person.name != response.name
         ))
+        showNotification(`Successfully deleted ${response.name}`, 'info')
       }
     )}
   }
