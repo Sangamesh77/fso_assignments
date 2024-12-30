@@ -41,7 +41,6 @@ app.get("/api/persons", (request, response) => {
 
 app.get("/info", (request, response) => {
     Person.find({}).then(result => {
-        response.json(result)
         response.send(
             `<div>\
                 <p>Phonebook has info for ${result.length} people</p>\
@@ -54,41 +53,37 @@ app.get("/info", (request, response) => {
 
 app.get("/api/persons/:id", (request, response) => {
     const reqId = request.params.id
-    const person = phoneBook.find(person => person.id === reqId)
-    person ? response.send(person) : response.status(404).send(`Person ${reqId} does not exist!`)
+    Person.find({"id": reqId}).then(person => {
+        person ? response.send(person) : 
+    })
 })
 
 app.delete("/api/persons/:id", (request, response) => {
     const reqId = request.params.id
-    phoneBook = phoneBook.filter(person => person.id != reqId)
-    response.status(204).end()
+    Person.deleteOne({"id": reqId}).then(result => {
+        if(result.deletedCount === 1){
+            response.status(204).end()
+        } else {
+            response.status(404).send(`Person ${reqId} does not exist!`)
+        }
+    })
 })
 
 app.post("/api/persons", (request, response) => {
-    const existingIds = phoneBook.map(person => person.id)
     const body = request.body
-    if(existingIds.length >= 10000){
-        response.status(400).send("Too many entries in phonebook!")
-    }
-    else if(!body.name || !body.number){
+    if(!body.name || !body.number){
         response.status(400).send("Name or number is missing")
     }
-    else if(phoneBook.find(person => person.name === body.name || person.number === body.number)){
-        response.status(400).send("Name or number already exists!")
-    }
-    else{
-        let newId = 0
-        console.log("new id:", newId)
-        while(newId >= 0 && existingIds.includes(newId))
-            newId = Math.floor(Math.random() * 10000)
-        const newPerson = {
-            id: newId,
-            name: body.name,
-            number: body.number
+    Person.find({"name": body.name}).then(response => {
+        if(response){
+            response.status(400).send("Name or number already exists!")
+        } else {
+            Person.insertOne(body).then(result => {
+                response.status(200)
+                response.json(result)
+            })
         }
-        phoneBook = phoneBook.concat(newPerson)
-        response.json(newPerson)
-    }
+    })
 })
 
 const PORT = process.env.PORT || 3001
