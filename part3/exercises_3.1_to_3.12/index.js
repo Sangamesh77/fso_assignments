@@ -74,8 +74,8 @@ app.post("/api/persons", (request, response) => {
     if(!body.name || !body.number){
         response.status(400).send("Name or number is missing")
     }
-    Person.find({"name": body.name}).then(response => {
-        if(response){
+    Person.find({"name": body.name}).then(result => {
+        if(result){
             response.status(400).send("Name or number already exists!")
         } else {
             Person.insertOne(body).then(result => {
