@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react'
-import ShortUniqueId from 'short-unique-id'
-import axios from 'axios'
 
 import Filter from './components/Filter'
 import AddNewRecord from './components/AddNewRecord'
@@ -9,7 +7,6 @@ import phoneBookService from "./services/phoneBook"
 import Notification from './components/Notification'
 
 const App = () => {
-  const uid = new ShortUniqueId({ length: 3})
   const [persons, setPersons] = useState([]) 
   const [filteredPersons, setFilteredPersons] = useState('')
   const [newName, setNewName] = useState('')
@@ -70,7 +67,7 @@ const App = () => {
               showNotification(`Successfully updated ${response.name}`, 'info')
             }
           ).catch(
-            error => {
+            () => {
               setPersons(persons.filter(person => person.id != newPerson.id))
               showNotification(`Information of ${newPerson.name} has already been removed from server`, 'error')
           }
