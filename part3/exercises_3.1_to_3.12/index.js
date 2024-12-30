@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require("express")
 const morgan = require("morgan")
 const cors = require('cors')
+const mongodb = require('mongodb')
 const app = express()
 morgan.token("payload", (request) => JSON.stringify(request.body))
 app.use(express.static('dist'))
@@ -52,14 +53,14 @@ app.get("/info", (request, response) => {
 })
 
 app.get("/api/persons/:id", (request, response) => {
-    const reqId = request.params.id
+    const reqId = new mongodb.ObjectId(request.params.id)
     Person.find({"id": reqId}).then(person => {
         person ? response.send(person) : response.status(404).send(`Person ${reqId} does not exist!`)
     })
 })
 
 app.delete("/api/persons/:id", (request, response) => {
-    const reqId = request.params.id
+    const reqId = new mongodb.ObjectId(request.params.id)
     Person.deleteOne({"id": reqId}).then(result => {
         if(result.deletedCount === 1){
             response.status(204).end()
