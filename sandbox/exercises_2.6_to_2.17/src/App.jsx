@@ -54,6 +54,8 @@ const App = () => {
       .then(response => {
         setPersons(persons.concat(response))
         showNotification(`Successfully added ${response.name}`, 'info')
+      }).catch(error => {
+        showNotification(error.response.data.error, 'error')
       }) 
       : (() => {
         const newPerson = {
