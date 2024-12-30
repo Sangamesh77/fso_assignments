@@ -54,7 +54,7 @@ app.get("/info", (request, response) => {
 app.get("/api/persons/:id", (request, response) => {
     const reqId = request.params.id
     Person.find({"id": reqId}).then(person => {
-        person ? response.send(person) : 
+        person ? response.send(person) : response.status(404).send(`Person ${reqId} does not exist!`)
     })
 })
 
