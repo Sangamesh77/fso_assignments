@@ -1,6 +1,101 @@
-const { test, describe } = require('node:test')
+const { test, describe, after, beforeEach } = require('node:test')
 const assert = require('node:assert')
+const supertest = require('supertest')
 const listHelper = require('../utils/list_helper')
+const testHelper = require('./test_helper')
+const mongoose = require('mongoose')
+
+const app = require("../app")
+const api = supertest(app)
+
+const Blog = require('../models/blog')
+
+beforeEach(testHelper.rePopulateBlogs())
+
+test('get all blogs', async () => {
+  const allBlogs = await api.get("/api/blogs")
+  assert.strictEqual(allBlogs.body.length, 2)
+})
+
+test('ensure contentes are accurate including id parameter', async () => {
+  const allBlogs = await api.get("/api/blogs")
+  assert.deepStrictEqual(testHelper.listWith3BlogsResponse, allBlogs.body)
+})
+
+test('Add a blog post', async () => {
+  const newBlog = {
+      title: "New React patterns",
+      author: "Michael Chan",
+      url: "https://reactpatterns-NEW.com/",
+      likes: 12,
+      id: "6778c9d0c1564b24dc880123"
+  }
+  await api
+        .post("/api/blogs")
+        .send(newBlog)
+        .expect(201)
+  const allBlogs = await api.get("/api/blogs")
+  await testHelper.rePopulateBlogs()
+  assert.strictEqual(allBlogs.body.length, 3)
+})
+
+test('Adding blog without likes parameter defaults it to 0', async () => {
+  const newBlog = {
+    title: "New React patterns",
+    author: "Michael Chan",
+    url: "https://reactpatterns-NEW.com/",
+    _id: "6778c9d0c1564b24dc880124"
+  }
+  await api
+  .post("/api/blogs")
+  .send(newBlog)
+  .expect(201)
+  
+  const requiredBlog = await Blog.findById("6778c9d0c1564b24dc880124")
+  assert.strictEqual(requiredBlog.likes, 0)
+})
+
+test('Adding blog without url parameter returns 400', async () => {
+  const newBlog = {
+    title: "New React patterns",
+    author: "Michael Chan",
+    _id: "6778c9d0c1564b24dc880125"
+  }
+  const resp = await api
+  .post("/api/blogs")
+  .send(newBlog)
+  //.expect(400)
+
+  assert.strictEqual(resp.statusCode, 400)
+})
+
+describe("delete and update blogs", () => {
+  
+  test('Delete a blog', async () => {
+    await api.delete("/api/blogs/6778c9d0c1564b24dc880124").expect(204)
+    
+    const requiredBlog = await Blog.findById("6778c9d0c1564b24dc880124")
+    assert.equal(requiredBlog, undefined)
+  })
+
+  test("Update a blog", async () => {
+    const updatedBlog = {
+      title: "React patterns new",
+      author: "Michael",
+      url: "https://reactpatternsNEW.com/",
+      likes: 17
+    }
+    await api
+          .put('/api/blogs/6778c9d0c1564b24dc880a0a')
+          .send(updatedBlog)
+          .expect(201)
+    const requiredBlog = await Blog.findById("6778c9d0c1564b24dc880a0a")
+    for(let key in updatedBlog){
+      assert.strictEqual(requiredBlog[key], updatedBlog[key])
+    }
+  })
+
+})
 
 test('dummy returns one', () => {
   const blogs = []
@@ -169,4 +264,8 @@ const listWith3Blogs = [
         const result = listHelper.mostLiked(listWith3Blogs)
         assert.deepStrictEqual(result, {"author": "Edsger W. Dijkstra", "likes": 12})
       })
+  })
+
+  after(async () => {
+    await mongoose.connection.close()
   })
