@@ -9,8 +9,19 @@ const app = require("../app")
 const api = supertest(app)
 
 const Blog = require('../models/blog')
+let token = null
 
 beforeEach(testHelper.rePopulateBlogs())
+
+test('username and/or password must be more than 3 chars long, else get failure', async () => {
+  const testRequest = {
+    "username": "new1",
+    "name": "Sup",
+    "password": "pas"
+}
+  const resp = await api.post("/api/users").send(testRequest)
+  assert.strictEqual(resp.statusCode, 400)
+})
 
 test('get all blogs', async () => {
   const allBlogs = await api.get("/api/blogs")
@@ -37,6 +48,28 @@ test('Add a blog post', async () => {
   const allBlogs = await api.get("/api/blogs")
   await testHelper.rePopulateBlogs()
   assert.strictEqual(allBlogs.body.length, 3)
+})
+
+test('Add a blog post with invalid user', async () => {
+  const newBlog = {
+      title: "New React patterns",
+      author: "Michael Chan",
+      url: "https://reactpatterns-NEW.com/",
+      likes: 12,
+      id: "6778c9d0c1564b24dc880123"
+  }
+  token = await api.post('/api/login').send({
+    username: "newUser",
+    password: "password"
+  })
+  console.log("Token:", token.body)
+  const resp = await api
+        .post("/api/blogs")
+        .set("authorization", `Bearer 1234567`)
+        .send(newBlog)
+  const allBlogs = await api.get("/api/blogs")
+  await testHelper.rePopulateBlogs()
+  assert.strictEqual(resp.statusCode, 401)
 })
 
 test('Adding blog without likes parameter defaults it to 0', async () => {
