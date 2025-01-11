@@ -31,6 +31,45 @@ blogsRouter.post('/', async ( request, response) => {
   }
 })
 
+blogsRouter.put('/:id', async ( request, response ) => {
+  try{
+    console.log("Request: ", request.body)
+    const user = await User.findById(request.user)
+    const blog = new Blog({
+      ...request.body,
+      user: user.id
+    })
+    const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, request.body, {new: true})
+    response.status(201).json(updatedBlog)
+  } catch(exception){
+    console.log(exception)
+  }
+})
+
+// blogsRouter.put('/:id', async (request, response) => {
+//   try{
+//   const body = request.body
+//   const user = await User.findById(request.user)
+//   const blog = {
+//     ...body,
+//     user: user.id
+//   }
+//   const newBlog = Blog.findByIdAndUpdate(request.params.id, {new: true})
+//   response.status(201).json(await newBlog)
+// } catch(exception){
+//   console.log("Exception updating blog: ", exception)
+// }
+// })
+
+// blogsRouter.delete('/:id', async (request, response) => {
+//   try{
+//   await Blog.findByIdAndDelete(request.params.id)
+//   response.status(204).end()
+// } catch(exception){
+//   console.log("Exception deleting blog: ", exception)
+// }
+// })
+
 blogsRouter.delete('/:id', async ( request, response ) => {
   try{
     if (!request.user) {    
@@ -49,15 +88,6 @@ blogsRouter.delete('/:id', async ( request, response ) => {
   } catch(exception){
     console.log(exception)
   }
-
-  blogsRouter.put('/:id', async ( request, response ) => {
-    try{
-      const updatedBlog = await Blog.findByIdAndUpdate(request.params.id, request.body, {new: true})
-      response.status(201).json(updatedBlog)
-    } catch(exception){
-      console.log(exception)
-    }
-  })
 })
 
 module.exports = blogsRouter
