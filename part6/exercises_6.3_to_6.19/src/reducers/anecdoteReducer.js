@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
+import anecdotesService from '../services/anecdotes'
 
 const anecdotesAtStart = [
   'If it hurts, do it more often',
@@ -42,23 +43,48 @@ const initialState = anecdotesAtStart.map(asObject)
 
 const anecdoteSlice = createSlice({
   name: 'anecdotes',
-  initialState,
+  initialState: [],
   reducers: {
-    createAnecdote(state, action){
-      console.log("Create payload: ", action.payload)
-      return state.concat(asObject(action.payload))
-    },
-    voteAnecdote(state, action){
-      console.log("payload id:", action.payload)
-      const updatedAnecdotes = state.map((anecdote) => {
-        return anecdote.id === action.payload ? {...anecdote, votes: anecdote.votes + 1} : anecdote
-      })
-      return updatedAnecdotes.sort((prev, next) => {
+    setAnecdotes(state, action){
+      return action.payload.sort((prev, next) => {
         return prev.votes < next.votes
       })
+    },
+    appendAnecdote(state, action){
+      state.push(action.payload)
     }
   }
 })
 
-export const { createAnecdote, voteAnecdote } = anecdoteSlice.actions
+export const { appendAnecdote, setAnecdotes } = anecdoteSlice.actions
+
+export const initAnecdotes = () => {
+  return async dispatch => {
+    const anecdotes = await anecdotesService.getAll()
+    dispatch(setAnecdotes(anecdotes))
+  }
+}
+
+export const createAnecdote = content => {
+  return async dispatch => {
+    const newAnecdote = await anecdotesService.createNew(content)
+    console.log("new anecdote:",newAnecdote)
+    dispatch(appendAnecdote(newAnecdote))
+  }
+}
+
+export const voteAnecdote = id => {
+  return async (dispatch, getState) => {
+    console.log("payload id:", id)
+    const state = getState().anecdotes
+    const requiredAnecdote = state.find(anecdote => anecdote.id == id)
+    console.log("required anecdote:", requiredAnecdote)
+    const updatedAnecdote = await anecdotesService.voteAnecdote(requiredAnecdote)
+    const updatedAnecdotes = state.map((anecdote) => {
+      return anecdote.id === id ? updatedAnecdote : anecdote
+    })
+    dispatch(setAnecdotes(updatedAnecdotes))
+  }
+}
+
 export default anecdoteSlice.reducer
